@@ -1,4 +1,4 @@
-# zfs-on-wsl-by-module
+# mod_zfs_on_wsl
 Script to build zfs module for standard WSL2 kernel.
 
 ## Build:
