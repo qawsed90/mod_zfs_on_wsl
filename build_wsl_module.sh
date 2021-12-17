@@ -1,12 +1,16 @@
 #!/bin/sh
 set -xe
 
-ZFS_VERSION="2.1.1"
+ZFS_VERSION="2.1.2"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
-LINUX_RELEASE="1"
+LINUX_RELEASE="2"
+
+SCRIPTDIR=$(pwd)
+KERNELSRCDIR=${SCRIPTDIR}/WSL2-Linux-Kernel
+ZFSSRCDIR=${SCRIPTDIR}/zfs
 
 #
 # Install pre-requisites
@@ -40,21 +44,23 @@ sudo apt install \
 #
 # Download source code
 #
-if [ ! -d WSL2-Linux-Kernel ];then
+if [ ! -d ${KERNELSRCDIR} ];then
   git clone https://github.com/microsoft/WSL2-Linux-Kernel.git
 fi
-if [ ! -d zfs ];then
+if [ ! -d ${ZFSSRCDIR} ];then
   git clone https://github.com/openzfs/zfs.git 
 fi
-KERNELSRCDIR=$(pwd)/WSL2-Linux-Kernel
-ZFSSRCDIR=$(pwd)/zfs
 
 #
 # kernel build prepare
 #
 cd ${KERNELSRCDIR}
+git fetch --tags origin
 git checkout linux-msft-wsl-${LINUX_VERSION}
 cp Microsoft/config-wsl .config
+if [ -f ${SCRIPTDIR}/add_module_config ];then
+  cat ${SCRIPTDIR}/add_module_config >> .config
+fi
 make olddefconfig
 make LOCALVERSION= modules -j$(nproc)
 
@@ -62,6 +68,7 @@ make LOCALVERSION= modules -j$(nproc)
 # build zfs
 #
 cd ${ZFSSRCDIR}
+git fetch --tags origin
 git checkout zfs-${ZFS_VERSION}
 sh autogen.sh
 ./configure \
@@ -73,7 +80,6 @@ sh autogen.sh
 	--enable-linux-builtin=no \
 	--with-linux=${KERNELSRCDIR} \
 	--with-linux-obj=${KERNELSRCDIR}
-make -j$(nproc)
 
 rm -rf ${ZFSSRCDIR}/debwork
 make -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork 
@@ -95,7 +101,7 @@ Provides: zfs
 Description: zfs for WSL linux
 EOF
 
-fakeroot dpkg-deb --build debwork ..
+fakeroot dpkg-deb --build debwork ${SCRIPTDIR}
 
 #
 # build kernel module
@@ -120,7 +126,7 @@ Maintainer: $(whoami)@$(hostname)
 Architecture: amd64
 Version: ${LINUX_VERSION}-${LINUX_RELEASE}
 Provides: linux-module
-Description: module files for WSL linux kernel
+Description: module files (zfs-${ZFS_VERSION}) for WSL linux kernel
 EOF
 
 cat > ${KERNELSRCDIR}/debwork/DEBIAN/postinst << EOF
@@ -129,7 +135,7 @@ depmod ${KERNELVER}
 EOF
 chmod 755 ${KERNELSRCDIR}/debwork/DEBIAN/postinst
 
-fakeroot dpkg-deb --build debwork ..
+fakeroot dpkg-deb --build debwork ${SCRIPTDIR}
 
 set +x
 echo '================================================================================================='
