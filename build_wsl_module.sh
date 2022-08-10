@@ -1,12 +1,20 @@
 #!/bin/sh
 set -xe
 
-ZFS_VERSION="2.1.2"
+#ZFS_VERSION="2.1.2"
+#ZFS_VERSION="2.1.3"
+#ZFS_VERSION="2.1.4"
+ZFS_VERSION="2.1.5"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
+#KERNELVER="5.10.43.3-microsoft-standard-WSL2"
+#KERNELVER="5.10.60.1-microsoft-standard-WSL2"
+#KERNELVER="5.10.93.2-microsoft-standard-WSL2"
+#KERNELVER="5.10.102.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.57.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
-LINUX_RELEASE="2"
+LINUX_RELEASE="1"
 
 SCRIPTDIR=$(pwd)
 KERNELSRCDIR=${SCRIPTDIR}/WSL2-Linux-Kernel
@@ -30,6 +38,7 @@ sudo apt install \
   fakeroot \
   flex \
   gawk \
+  gcc-9 \
   libblkid-dev \
   libelf-dev \
   libffi-dev \
@@ -61,8 +70,8 @@ cp Microsoft/config-wsl .config
 if [ -f ${SCRIPTDIR}/add_module_config ];then
   cat ${SCRIPTDIR}/add_module_config >> .config
 fi
-make olddefconfig
-make LOCALVERSION= modules -j$(nproc)
+make CC=gcc-9 olddefconfig
+make CC=gcc-9 LOCALVERSION= modules -j$(nproc)
 
 #
 # build zfs
@@ -71,7 +80,7 @@ cd ${ZFSSRCDIR}
 git fetch --tags origin
 git checkout zfs-${ZFS_VERSION}
 sh autogen.sh
-./configure \
+CC=gcc-9 ./configure \
 	--prefix=/usr \
 	--sysconfdir=/etc \
 	--libdir=/lib \
@@ -82,8 +91,8 @@ sh autogen.sh
 	--with-linux-obj=${KERNELSRCDIR}
 
 rm -rf ${ZFSSRCDIR}/debwork
-make -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork 
-make -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork install
+make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork 
+make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork install
 rm -rf ${ZFSSRCDIR}/debwork/lib/modules/
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
@@ -108,11 +117,11 @@ fakeroot dpkg-deb --build debwork ${SCRIPTDIR}
 #
 rm -rf ${KERNELSRCDIR}/debwork
 cd ${ZFSSRCDIR}/module
-make -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork
-make -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork install
+make CC=gcc-9 -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork
+make CC=gcc-9 -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork install
 cd ${KERNELSRCDIR}
-make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
-make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
+make CC=gcc-9 -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
+make CC=gcc-9 -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
 
@@ -127,6 +136,9 @@ Architecture: amd64
 Version: ${LINUX_VERSION}-${LINUX_RELEASE}
 Provides: linux-module
 Description: module files (zfs-${ZFS_VERSION}) for WSL linux kernel
+ Enable modules:
+ CONFIG_ZFS=m$(test -f ${SCRIPTDIR}/add_module_config && echo &&
+sed 's/^/ /' ${SCRIPTDIR}/add_module_config)
 EOF
 
 cat > ${KERNELSRCDIR}/debwork/DEBIAN/postinst << EOF
