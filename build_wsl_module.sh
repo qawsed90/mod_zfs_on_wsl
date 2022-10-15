@@ -4,7 +4,8 @@ set -xe
 #ZFS_VERSION="2.1.2"
 #ZFS_VERSION="2.1.3"
 #ZFS_VERSION="2.1.4"
-ZFS_VERSION="2.1.5"
+#ZFS_VERSION="2.1.5"
+ZFS_VERSION="2.1.6"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
@@ -13,6 +14,7 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.10.93.2-microsoft-standard-WSL2"
 #KERNELVER="5.10.102.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.57.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.68.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
 LINUX_RELEASE="1"
 
@@ -65,7 +67,9 @@ fi
 #
 cd ${KERNELSRCDIR}
 git fetch --tags origin
-git checkout linux-msft-wsl-${LINUX_VERSION}
+KERNELTAG=$(git tag | grep wsl | grep ${LINUX_VERSION})
+git checkout ${KERNELTAG}
+make mrproper
 cp Microsoft/config-wsl .config
 if [ -f ${SCRIPTDIR}/add_module_config ];then
   cat ${SCRIPTDIR}/add_module_config >> .config
