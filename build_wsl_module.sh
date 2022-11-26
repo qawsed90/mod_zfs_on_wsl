@@ -90,7 +90,7 @@ make CC=gcc-9 LOCALVERSION= modules -j$(nproc)
 #[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
 # to fix this error, comment out
 #
-#cp '/mnt/c/Program Files/WindowsApps/MicrosoftCorporationII.WindowsSubsystemForLinux_1.0.0.0_x64__8wekyb3d8bbwe/tools/kernel' ${KERNELSRCDIR}/vmlinux
+#cp /sys/kernel/btf/vmlinux ${KERNELSRCDIR}
 
 #
 # build zfs
