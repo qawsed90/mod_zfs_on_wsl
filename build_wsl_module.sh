@@ -15,6 +15,7 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.10.102.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.57.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.68.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.74.2-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
 LINUX_RELEASE="1"
 
@@ -76,6 +77,20 @@ if [ -f ${SCRIPTDIR}/add_module_config ];then
 fi
 make CC=gcc-9 olddefconfig
 make CC=gcc-9 LOCALVERSION= modules -j$(nproc)
+
+#
+# original kernel (5.15.74.2-microsoft-standard-WSL2) can't load module.
+# dmesg say below:
+#[    4.655440] BPF:[134983] FWD
+#[    4.655837] BPF:struct
+#[    4.656047] BPF:
+#[    4.656277] BPF:Invalid name
+#[    4.656610] BPF:
+#
+#[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
+# to fix this error, comment out
+#
+#cp '/mnt/c/Program Files/WindowsApps/MicrosoftCorporationII.WindowsSubsystemForLinux_1.0.0.0_x64__8wekyb3d8bbwe/tools/kernel' ${KERNELSRCDIR}/vmlinux
 
 #
 # build zfs
