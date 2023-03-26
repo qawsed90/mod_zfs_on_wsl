@@ -5,7 +5,8 @@ set -xe
 #ZFS_VERSION="2.1.3"
 #ZFS_VERSION="2.1.4"
 #ZFS_VERSION="2.1.5"
-ZFS_VERSION="2.1.6"
+#ZFS_VERSION="2.1.6"
+ZFS_VERSION="2.1.9"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
@@ -16,6 +17,8 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.15.57.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.68.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.74.2-microsoft-standard-WSL2"
+#KERNELVER="5.15.79.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.90.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
 LINUX_RELEASE="1"
 
@@ -90,7 +93,7 @@ make CC=gcc-9 LOCALVERSION= modules -j$(nproc)
 #[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
 # to fix this error, comment out
 #
-#cp /sys/kernel/btf/vmlinux ${KERNELSRCDIR}
+cp /sys/kernel/btf/vmlinux ${KERNELSRCDIR}
 
 #
 # build zfs
