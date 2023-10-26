@@ -6,7 +6,9 @@ set -xe
 #ZFS_VERSION="2.1.4"
 #ZFS_VERSION="2.1.5"
 #ZFS_VERSION="2.1.6"
-ZFS_VERSION="2.1.9"
+#ZFS_VERSION="2.1.9"
+#ZFS_VERSION="2.1.13"
+ZFS_VERSION="2.2.0"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
@@ -19,8 +21,9 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.15.74.2-microsoft-standard-WSL2"
 #KERNELVER="5.15.79.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.90.1-microsoft-standard-WSL2"
+#KERNELVER="6.1.21.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
-LINUX_RELEASE="1"
+LINUX_RELEASE="3"
 
 SCRIPTDIR=$(pwd)
 KERNELSRCDIR=${SCRIPTDIR}/WSL2-Linux-Kernel
@@ -116,6 +119,7 @@ rm -rf ${ZFSSRCDIR}/debwork
 make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork 
 make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork install
 rm -rf ${ZFSSRCDIR}/debwork/lib/modules/
+rm -rf ${ZFSSRCDIR}/debwork/usr/src/zfs-${ZFS_VERSION}/${KERNELVER}
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
 
