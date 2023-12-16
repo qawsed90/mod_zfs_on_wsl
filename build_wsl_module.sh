@@ -8,7 +8,7 @@ set -xe
 #ZFS_VERSION="2.1.6"
 #ZFS_VERSION="2.1.9"
 #ZFS_VERSION="2.1.13"
-ZFS_VERSION="2.2.0"
+ZFS_VERSION="2.2.2"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
@@ -21,9 +21,10 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.15.74.2-microsoft-standard-WSL2"
 #KERNELVER="5.15.79.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.90.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.133.1-microsoft-standard-WSL2"
 #KERNELVER="6.1.21.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
-LINUX_RELEASE="3"
+LINUX_RELEASE="1"
 
 SCRIPTDIR=$(pwd)
 KERNELSRCDIR=${SCRIPTDIR}/WSL2-Linux-Kernel
@@ -47,7 +48,7 @@ sudo apt install \
   fakeroot \
   flex \
   gawk \
-  gcc-9 \
+  gcc \
   libblkid-dev \
   libelf-dev \
   libffi-dev \
@@ -70,6 +71,23 @@ if [ ! -d ${ZFSSRCDIR} ];then
 fi
 
 #
+# kernel build with gcc-9 (Ubuntu 9.5.0-3ubuntu1) 9.5.0 by Ubuntu can't load module.
+#   (NOTE: No BPF error gcc (GCC) 11.2.0 by CBL-Mariner 2.0)
+# dmesg say below:
+#[    4.655440] BPF:[134983] FWD
+#[    4.655837] BPF:struct
+#[    4.656047] BPF:
+#[    4.656277] BPF:Invalid name
+#[    4.656610] BPF:
+#
+#[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
+# build CBL-Mariner by docker, comment out
+#
+#make(){
+#	docker run -ti --rm --volume=${SCRIPTDIR}:${SCRIPTDIR} -w $(pwd) wslkernelbuilder:2.0 make $*
+#}
+
+#
 # kernel build prepare
 #
 cd ${KERNELSRCDIR}
@@ -81,22 +99,15 @@ cp Microsoft/config-wsl .config
 if [ -f ${SCRIPTDIR}/add_module_config ];then
   cat ${SCRIPTDIR}/add_module_config >> .config
 fi
-make CC=gcc-9 olddefconfig
-make CC=gcc-9 LOCALVERSION= modules -j$(nproc)
+make olddefconfig
+make LOCALVERSION= modules -j$(nproc)
 
 #
-# original kernel (5.15.74.2-microsoft-standard-WSL2) can't load module.
-# dmesg say below:
-#[    4.655440] BPF:[134983] FWD
-#[    4.655837] BPF:struct
-#[    4.656047] BPF:
-#[    4.656277] BPF:Invalid name
-#[    4.656610] BPF:
+# copy BTF file from /sys/kernel
 #
-#[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
-# to fix this error, comment out
-#
-cp /sys/kernel/btf/vmlinux ${KERNELSRCDIR}
+if ! $(type make | grep 'is a shell function' > /dev/null);then
+	cp /sys/kernel/btf/vmlinux ${KERNELSRCDIR}
+fi
 
 #
 # build zfs
@@ -105,7 +116,7 @@ cd ${ZFSSRCDIR}
 git fetch --tags origin
 git checkout zfs-${ZFS_VERSION}
 sh autogen.sh
-CC=gcc-9 ./configure \
+./configure \
 	--prefix=/usr \
 	--sysconfdir=/etc \
 	--libdir=/lib \
@@ -116,8 +127,8 @@ CC=gcc-9 ./configure \
 	--with-linux-obj=${KERNELSRCDIR}
 
 rm -rf ${ZFSSRCDIR}/debwork
-make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork 
-make CC=gcc-9 -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork install
+/usr/bin/make -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork
+/usr/bin/make -j$(nproc) DESTDIR=${ZFSSRCDIR}/debwork install
 rm -rf ${ZFSSRCDIR}/debwork/lib/modules/
 rm -rf ${ZFSSRCDIR}/debwork/usr/src/zfs-${ZFS_VERSION}/${KERNELVER}
 
@@ -143,11 +154,12 @@ fakeroot dpkg-deb --build debwork ${SCRIPTDIR}
 #
 rm -rf ${KERNELSRCDIR}/debwork
 cd ${ZFSSRCDIR}/module
-make CC=gcc-9 -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork
-make CC=gcc-9 -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork install
+make clean
+make -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork
+make -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork install
 cd ${KERNELSRCDIR}
-make CC=gcc-9 -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
-make CC=gcc-9 -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
+make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
+make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
 

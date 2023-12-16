@@ -17,13 +17,13 @@ command=modprobe zfs
 
 ### install deb packages for zfs
 ```
-$ sudo dpkg -i linux-module-5.15.90.1-microsoft-standard-wsl2_5.15.90.1-3_amd64.deb
-$ sudo dpkg -i zfs_2.2.0-1_amd64.deb
+$ sudo dpkg -i linux-module-5.15.133.1-microsoft-standard-wsl2_5.15.133.1-1_amd64.deb
+$ sudo dpkg -i zfs_2.2.2-1_amd64.deb
 ```
 
 ### check zfs
 ```
 $ sudo zfs version
-zfs-2.2.0-1
-zfs-kmod-2.2.0-1
+zfs-2.2.2-1
+zfs-kmod-2.2.2-1
 ```
