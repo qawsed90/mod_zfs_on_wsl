@@ -81,10 +81,10 @@ fi
 #[    4.656610] BPF:
 #
 #[    4.790484] modprobe: ERROR: could not insert 'zfs': Invalid argument
-# build CBL-Mariner by docker, comment out
+# build CBL-Mariner by docker, disable comment out
 #
 #make(){
-#	docker run -ti --rm --volume=${SCRIPTDIR}:${SCRIPTDIR} -w $(pwd) wslkernelbuilder:2.0 make $*
+#	docker run -u $(id -u $(whoami)):$(id -g $(whoami)) -ti --rm --volume=${SCRIPTDIR}:${SCRIPTDIR} -w $(pwd) wslkernelbuilder:2.0 make $*
 #}
 
 #
