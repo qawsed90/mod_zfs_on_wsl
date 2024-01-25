@@ -21,8 +21,9 @@ KERNELVER=$(uname -r)
 #KERNELVER="5.15.74.2-microsoft-standard-WSL2"
 #KERNELVER="5.15.79.1-microsoft-standard-WSL2"
 #KERNELVER="5.15.90.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.133.1-microsoft-standard-WSL2"
 #KERNELVER="6.1.21.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.133.1-microsoft-standard-WSL2"
+#KERNELVER="5.15.146.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
 LINUX_RELEASE="1"
 
@@ -160,6 +161,22 @@ make -j$(nproc) DESTDIR=${KERNELSRCDIR}/debwork install
 cd ${KERNELSRCDIR}
 make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
 make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
+
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/block/nbd.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/bonding/bonding.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/dummy.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/vrf.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/ch341.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/cp210x.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/ftdi_sio.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/usbserial.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv4/ipip.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv4/tunnel4.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv6/sit.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_bpf.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_CT.ko
+rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_u32.ko
+find ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER} -type d -empty -delete
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
 
