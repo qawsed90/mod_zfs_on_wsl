@@ -8,22 +8,16 @@ set -xe
 #ZFS_VERSION="2.1.6"
 #ZFS_VERSION="2.1.9"
 #ZFS_VERSION="2.1.13"
-ZFS_VERSION="2.2.2"
+#ZFS_VERSION="2.2.2"
+#ZFS_VERSION="2.2.3"
+#ZFS_VERSION="2.2.4"
+#ZFS_VERSION="2.2.6"
+#ZFS_VERSION="2.3.0"
+#ZFS_VERSION="2.3.1"
+ZFS_VERSION="2.3.3"
 ZFS_RELEASE="1"
 
 KERNELVER=$(uname -r)
-#KERNELVER="5.10.43.3-microsoft-standard-WSL2"
-#KERNELVER="5.10.60.1-microsoft-standard-WSL2"
-#KERNELVER="5.10.93.2-microsoft-standard-WSL2"
-#KERNELVER="5.10.102.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.57.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.68.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.74.2-microsoft-standard-WSL2"
-#KERNELVER="5.15.79.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.90.1-microsoft-standard-WSL2"
-#KERNELVER="6.1.21.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.133.1-microsoft-standard-WSL2"
-#KERNELVER="5.15.146.1-microsoft-standard-WSL2"
 LINUX_VERSION=$(echo ${KERNELVER}|awk -F'[-]' '{print $1}')
 LINUX_RELEASE="1"
 
@@ -59,7 +53,8 @@ sudo apt install \
   python3-setuptools \
   uuid-dev \
   wget \
-  zlib1g-dev
+  zlib1g-dev \
+  libtirpc-dev
 
 #
 # Download source code
@@ -117,6 +112,8 @@ cd ${ZFSSRCDIR}
 git fetch --tags origin
 git checkout zfs-${ZFS_VERSION}
 sh autogen.sh
+sh scripts/make_gitrev.sh
+sed -i 's/\$(LN_S) zfs/\$(LN_S) -f zfs/' Makefile.in
 ./configure \
 	--prefix=/usr \
 	--sysconfdir=/etc \
@@ -162,20 +159,15 @@ cd ${KERNELSRCDIR}
 make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules
 make -j$(nproc) INSTALL_MOD_PATH=${KERNELSRCDIR}/debwork LOCALVERSION= modules_install
 
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/block/nbd.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/bonding/bonding.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/dummy.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/net/vrf.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/ch341.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/cp210x.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/ftdi_sio.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/drivers/usb/serial/usbserial.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv4/ipip.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv4/tunnel4.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/ipv6/sit.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_bpf.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_CT.ko
-rm -f ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER}/kernel/net/netfilter/xt_u32.ko
+ORIGINAL_MODULES=$(wsl.exe --system --cd /home/wslg find /lib/modules/$(uname -r)/kernel -type f -name "*.ko" -print)
+
+#Removing duplicate module
+for module in $ORIGINAL_MODULES; do
+  if [ -f "${KERNELSRCDIR}/debwork$module" ]; then
+    rm -f ${KERNELSRCDIR}/debwork$module
+  fi
+done
+
 find ${KERNELSRCDIR}/debwork/lib/modules/${KERNELVER} -type d -empty -delete
 
 INSTALLED_SIZE=$(du -ks debwork|awk '{print $1}')
