@@ -1,0 +1,41 @@
+FROM mcr.microsoft.com/azurelinux/base/core:3.0
+
+RUN tdnf install -y --releasever=3.0 shadow-utils \
+  && useradd -U builder --shell /bin/sh --home-dir /home/builder --create-home \
+  && tdnf install -y --releasever=3.0 \
+    make \
+    gcc \
+    glibc-devel \
+    ncurses-devel \
+    binutils \
+    kernel-headers \
+    libuuid-devel \
+    flex \
+    bison \
+    openssl-devel \
+    diffutils \
+    python3 \
+    bc \
+    gawk \
+    perl \
+    dwarves \
+    cpio \
+    tar \
+    xz \
+    net-tools \
+    rsync \
+    libudev-devel \
+    uuid-devel \
+    libtirpc-devel \
+    rpm-build \
+    kernel-rpm-macros \
+    python3-distlib \
+    python3-devel \
+    python3-cffi \
+    python3-pip \
+    python3-setuptools \
+    curl-devel \
+    ca-certificates \
+  && tdnf clean all
+
+USER builder
