@@ -32,18 +32,20 @@ To successfully install built ZFS modules and ensure `modprobe zfs` works reliab
 
 ### Configuration Steps (Ubuntu / Debian Distribution)
 
-1. Edit `/etc/wsl.conf` inside your distribution (replace `6.18.40.1-microsoft-standard-WSL2` with your actual kernel version from `uname -r`):
-
-```bash
-sudo vi /etc/wsl.conf
-```
-
-2. Add or update the `command` directive under the `[boot]` section as follows:
+1. Configuring OverlayFS to make /usr/lib/modules writable on WSL startup
 
 ```bash
 sudo mkdir -p /usr/lib/modules_overlay/upper/6.18.40.1-microsoft-standard-WSL2
 sudo mkdir -p /usr/lib/modules_overlay/work/6.18.40.1-microsoft-standard-WSL2
 ```
+
+2. Edit `/etc/wsl.conf` inside your distribution (replace `6.18.40.1-microsoft-standard-WSL2` with your actual kernel version from `uname -r`):
+
+```bash
+sudo vi /etc/wsl.conf
+```
+
+3. Add or update the `command` directive under the `[boot]` section as follows:
 
 ```ini
 [boot]
@@ -55,7 +57,7 @@ workdir=/usr/lib/modules_overlay/work/6.18.40.1-microsoft-standard-WSL2 \
 modprobe zfs
 ```
 
-3. Restart WSL from Windows PowerShell or Command Prompt:
+4. Restart WSL from Windows PowerShell or Command Prompt:
 
 ```powershell
 wsl --shutdown
