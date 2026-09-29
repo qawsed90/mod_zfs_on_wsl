@@ -40,6 +40,11 @@ sudo vi /etc/wsl.conf
 
 2. Add or update the `command` directive under the `[boot]` section as follows:
 
+```bash
+sudo mkdir -p /usr/lib/modules_overlay/upper/6.18.40.1-microsoft-standard-WSL2
+sudo mkdir -p /usr/lib/modules_overlay/work/6.18.40.1-microsoft-standard-WSL2
+```
+
 ```ini
 [boot]
 command=mount -t overlay overlay -o \
