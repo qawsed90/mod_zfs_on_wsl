@@ -91,7 +91,9 @@ wslc build -f Dockerfile.ubuntu -t ubuntubuilder:26.0 .
 
 ## Usage
 
-Run `build_openzfs_for_wsl2.ps1` in PowerShell.
+> **Note**: This script must be executed on the **Windows Host** (via Windows PowerShell or PowerShell 7), NOT inside the WSL2 Linux terminal.
+
+Open PowerShell on Windows, navigate to the repository directory, and run the script:
 
 ### 1. Default Execution (Build DEB packages for ZFS 2.4.4)
 
