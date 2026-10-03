@@ -183,6 +183,7 @@ cp rpmbuild/RPMS/x86_64/*.rpm /host_rpm/
 "@
 
     wslc.exe run --rm -u "${CURRENT_UID}:${CURRENT_GID}" `
+        --tmpfs /tmp:exec,rw,mode=1777 `
         --volume="${HOST_WORK_DIR}:/host_src" `
         --volume="${HOST_RPM_DIR}:/host_rpm" `
         -w /tmp `
@@ -244,6 +245,7 @@ cp -f *.rpm /host_rpm/
 "@
 
     wslc.exe run --rm -u "${CURRENT_UID}:${CURRENT_GID}" `
+        --tmpfs /tmp:exec,rw,mode=1777 `
         --volume="${HOST_WORK_DIR}:/host_src" `
         --volume="${HOST_RPM_DIR}:/host_rpm" `
         -w /tmp `
@@ -271,7 +273,7 @@ if ($existingDeb) {
     Write-Host " [Host] Starting build container ($AZURE_CONTAINER)..."
     Write-Host "=========================================="
     wslc.exe rm -f $AZURE_CONTAINER 2>$null
-    wslc.exe run -d --name $AZURE_CONTAINER $IMAGE_AZURE_NAME tail -f /dev/null
+    wslc.exe run -d --tmpfs /tmp:exec,rw,mode=1777 --name $AZURE_CONTAINER $IMAGE_AZURE_NAME tail -f /dev/null
 
     # ==========================================
     # STEP 3.1: Define & Start Background Watcher Job
@@ -452,6 +454,7 @@ cp -f ../*.deb /host_deb/
         Write-Host " [Host] Current watcher job state: $($currentJob.State)"
 
         wslc.exe run --rm -i -u "${CURRENT_UID}:${CURRENT_GID}" `
+            --tmpfs /tmp:exec,rw,mode=1777 `
             -e ZFS_SRC_DIR="$ZFS_SRC_DIR" `
             --volume="${HOST_WORK_DIR}:/host_src" `
             --volume="${HOST_RPM_DIR}:/host_rpm" `
