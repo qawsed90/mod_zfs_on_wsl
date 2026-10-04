@@ -113,6 +113,14 @@ Open PowerShell on Windows, navigate to the repository directory, and run the sc
 .\build_openzfs_for_wsl2.ps1 -ZFS_TARGET "zfs-2.5.0" -BuildRpm
 ```
 
+### 4. Disabling tmpfs Mounts (-UseTmpfs:$false)
+
+```powershell
+.\build_openzfs_for_wsl2.ps1 -UseTmpfs:$false
+```
+
+By default, /tmp is mounted as tmpfs in build containers (-UseTmpfs defaults to $true). If host RAM is limited, pass -UseTmpfs:$false to perform disk-based builds.
+
 ---
 
 ## Output Artifacts & Installation

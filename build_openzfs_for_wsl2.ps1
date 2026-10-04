@@ -41,13 +41,21 @@
     Switch to enable building ZFS RPM packages (for Azure Linux / RHEL).
     If omitted, RPM building is skipped and only DEB packages are generated.
 
+.PARAMETER UseTmpfs
+    Switch or boolean to enable/disable mounting /tmp as tmpfs during build sessions.
+    (Default: $true). Use -UseTmpfs:$false to disable tmpfs usage.
+
 .EXAMPLE
     .\build_openzfs_for_wsl2.ps1
-    Standard execution. Builds only ZFS 2.4.4 DEB packages.
+    Standard execution. Builds only ZFS 2.4.4 DEB packages using tmpfs for /tmp.
 
 .EXAMPLE
     .\build_openzfs_for_wsl2.ps1 -BuildRpm
     Builds both ZFS 2.4.4 DEB and RPM packages.
+
+.EXAMPLE
+    .\build_openzfs_for_wsl2.ps1 -UseTmpfs:$false
+    Builds ZFS DEB packages without using tmpfs (useful when RAM is limited).
 
 .EXAMPLE
     .\build_openzfs_for_wsl2.ps1 -ZFS_TARGET "zfs-2.5.0" -BuildRpm
@@ -55,7 +63,8 @@
 #>
 param(
     [string]$ZFS_TARGET = "zfs-2.4.4",
-    [switch]$BuildRpm
+    [switch]$BuildRpm,
+    [bool]$UseTmpfs =$true
 )
 
 $ErrorActionPreference = "Stop"
@@ -182,8 +191,13 @@ make -j`$(nproc) binrpm-pkg LOCALVERSION=
 cp rpmbuild/RPMS/x86_64/*.rpm /host_rpm/
 "@
 
+    $step1TmpfsArgs = @()
+    if ($UseTmpfs) {
+        $step1TmpfsArgs = @("--tmpfs", "/tmp:exec,rw,size=16g,mode=1777")
+    }
+
     wslc.exe run --rm -u "${CURRENT_UID}:${CURRENT_GID}" `
-        --tmpfs /tmp:exec,rw,mode=1777 `
+        $step1TmpfsArgs `
         --volume="${HOST_WORK_DIR}:/host_src" `
         --volume="${HOST_RPM_DIR}:/host_rpm" `
         -w /tmp `
@@ -244,8 +258,13 @@ cp -f *.rpm /host_rpm/
 
 "@
 
+    $step2TmpfsArgs = @()
+    if ($UseTmpfs) {
+        $step2TmpfsArgs = @("--tmpfs", "/tmp:exec,rw,mode=1777")
+    }
+
     wslc.exe run --rm -u "${CURRENT_UID}:${CURRENT_GID}" `
-        --tmpfs /tmp:exec,rw,mode=1777 `
+        $step2TmpfsArgs `
         --volume="${HOST_WORK_DIR}:/host_src" `
         --volume="${HOST_RPM_DIR}:/host_rpm" `
         -w /tmp `
@@ -273,7 +292,11 @@ if ($existingDeb) {
     Write-Host " [Host] Starting build container ($AZURE_CONTAINER)..."
     Write-Host "=========================================="
     wslc.exe rm -f $AZURE_CONTAINER 2>$null
-    wslc.exe run -d --tmpfs /tmp:exec,rw,mode=1777 --name $AZURE_CONTAINER $IMAGE_AZURE_NAME tail -f /dev/null
+    $azureTmpfsArgs = @()
+    if ($UseTmpfs) {
+        $azureTmpfsArgs = @("--tmpfs", "/tmp:exec,rw,mode=1777")
+    }
+    wslc.exe run -d $azureTmpfsArgs --name $AZURE_CONTAINER$IMAGE_AZURE_NAME tail -f /dev/null
 
     # ==========================================
     # STEP 3.1: Define & Start Background Watcher Job
@@ -453,8 +476,13 @@ cp -f ../*.deb /host_deb/
         $currentJob = Get-Job -Id $watcherJob.Id
         Write-Host " [Host] Current watcher job state: $($currentJob.State)"
 
+        $stepDebTmpfsArgs = @()
+        if ($UseTmpfs) {
+            $stepDebTmpfsArgs = @("--tmpfs", "/tmp:exec,rw,mode=1777")
+        }
+
         wslc.exe run --rm -i -u "${CURRENT_UID}:${CURRENT_GID}" `
-            --tmpfs /tmp:exec,rw,mode=1777 `
+            $stepDebTmpfsArgs `
             -e ZFS_SRC_DIR="$ZFS_SRC_DIR" `
             --volume="${HOST_WORK_DIR}:/host_src" `
             --volume="${HOST_RPM_DIR}:/host_rpm" `
