@@ -296,7 +296,7 @@ if ($existingDeb) {
     if ($UseTmpfs) {
         $azureTmpfsArgs = @("--tmpfs", "/tmp:exec,rw,mode=1777")
     }
-    wslc.exe run -d $azureTmpfsArgs --name $AZURE_CONTAINER$IMAGE_AZURE_NAME tail -f /dev/null
+    wslc.exe run -d $azureTmpfsArgs --name $AZURE_CONTAINER $IMAGE_AZURE_NAME tail -f /dev/null
 
     # ==========================================
     # STEP 3.1: Define & Start Background Watcher Job
