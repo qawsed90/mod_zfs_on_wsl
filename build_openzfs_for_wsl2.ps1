@@ -121,9 +121,9 @@ $CURRENT_GID = 1000
 
 # Common shell snippet: Extract kernel RPMs and setup /tmp/k-src_build structure
 $extractKernelSrcSnippet = @"
-# 1. Identify kernel RPM files in /host_rpm
-DEVEL_RPM=`$(ls /host_rpm/kernel-devel-*.rpm 2>/dev/null | head -n1)
-DEBUGINFO_RPM=`$(ls /host_rpm/kernel-debuginfo-*.rpm 2>/dev/null | head -n1)
+# 1. Identify kernel RPM files in /host_rpm matching the exact kernel version ($K_VERSION)
+DEVEL_RPM=`$(ls /host_rpm/kernel-devel-${K_VERSION}_*.rpm 2>/dev/null | head -n1)
+DEBUGINFO_RPM=`$(ls /host_rpm/kernel-debuginfo-${K_VERSION}_*.rpm 2>/dev/null | head -n1)
 
 if [ -z "`${DEVEL_RPM}" ] || [ -z "`${DEBUGINFO_RPM}" ]; then
 	echo "Error: Required kernel RPMs were not found in /host_rpm."
@@ -171,8 +171,8 @@ Write-Host "=========================================="
 $K_VER_STRING =$KERNEL_SRC_DIR -split '-' | Select-Object -Last 1
 
 # Check for existing kernel-devel RPM files matching the current kernel version
-$develRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "kernel-devel-$K_VER_STRING*.rpm" -ErrorAction SilentlyContinue
-$debugInfoRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "kernel-debuginfo-$K_VER_STRING*.rpm" -ErrorAction SilentlyContinue
+$develRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "kernel-devel-${K_VER_STRING}_*.rpm" -ErrorAction SilentlyContinue
+$debugInfoRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "kernel-debuginfo-${K_VER_STRING}_*.rpm" -ErrorAction SilentlyContinue
 
 if ($develRpm -and $debugInfoRpm) {
     Write-Host "Skipping Kernel build because matching kernel-devel RPM already exists in $HOST_RPM_DIR."
@@ -213,7 +213,7 @@ Write-Host "=========================================="
 $Z_VER_STRING =$ZFS_SRC_DIR -split '-' | Select-Object -Last 1
 
 # Check for existing zfs RPM files matching the current kernel version
-$existingZfsRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "*zfs-*$Z_VER_STRING*$K_VER_STRING*.rpm" -ErrorAction SilentlyContinue
+$existingZfsRpm = Get-ChildItem -Path $HOST_RPM_DIR -Filter "*zfs-*$Z_VER_STRING*${K_VER_STRING}_*.rpm" -ErrorAction SilentlyContinue
 
 if (-not $BuildRpm) {
     Write-Host "Skipping ZFS RPM build because -BuildRpm switch was not specified."
@@ -277,7 +277,7 @@ Write-Host " STEP 3: ZFS DEB Build (wslc session 3)"
 Write-Host "=========================================="
 
 $Z_VER_STRING = ($ZFS_SRC_DIR -split '-')[-1]
-$existingDeb  = Get-ChildItem -Path $HOST_DEB_DIR -Filter "*zfs-*$Z_VER_STRING*$K_VER_STRING*.deb" -ErrorAction SilentlyContinue
+$existingDeb  = Get-ChildItem -Path $HOST_DEB_DIR -Filter "*zfs-*$Z_VER_STRING*${K_VER_STRING}-*.deb" -ErrorAction SilentlyContinue
 
 if ($existingDeb) {
     Write-Host "Skipping ZFS DEB build because matching DEB already exists in $HOST_DEB_DIR."
